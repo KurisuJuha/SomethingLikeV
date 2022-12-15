@@ -9,7 +9,9 @@ using UnityEngine.Networking;
 
 public class FaceLandmark : MonoBehaviour
 {
-    public List<Landmark> Landmarks;
+    public static List<Landmark> Landmarks;
+    public GameObject obj;
+    public List<GameObject> objects;
 
     void Start()
     {
@@ -33,6 +35,21 @@ public class FaceLandmark : MonoBehaviour
         {
             Parse(data);
         }
+        
+        // 描画
+        Normalize();
+        if (Landmarks.Count != 0)
+        {
+            for (int i = 0; i < Landmarks.Count; i++)
+            {
+                if (objects.Count <= i)
+                {
+                    objects.Add(Instantiate(obj));
+                }
+
+                objects[i].transform.position = new Vector3(Landmarks[i].X, Landmarks[i].Y, 0) * 10;
+            }
+        }
 
         StartCoroutine(getFaceLandmark());
     }
@@ -52,15 +69,59 @@ public class FaceLandmark : MonoBehaviour
             if (i == 0)
             {
                 x = f;
+                            
+                i++;
             }
             else
             {
                 y = f;
-                Landmarks.Add(new Landmark(x, y));
+                Landmarks.Add(new Landmark(x, y * -1));
                 i = 0;
             }
-            
-            i++;
+        }
+    }
+
+    private void Normalize()
+    {
+        float x_max = Landmarks[0].X;
+        float x_min = Landmarks[0].X;
+        float y_max = Landmarks[0].Y;
+        float y_min = Landmarks[0].Y;
+
+        float width;
+        float height;
+
+        // 各最低値と各最高値を取得
+        foreach (var landmark in Landmarks)
+        {
+            if (x_max < landmark.X)
+            {
+                x_max = landmark.X;
+            }
+            if (x_min > landmark.X)
+            {
+                x_min = landmark.X;
+            }
+            if (y_max < landmark.Y)
+            {
+                y_max = landmark.Y;
+            }
+            if (y_min > landmark.Y)
+            {
+                y_min = landmark.Y;
+            }
+        }
+
+        width = x_max - x_min;
+        height = y_max - y_min;
+        
+        // 顔の位置を中央にする
+        foreach (var landmark in Landmarks)
+        {
+            landmark.X -= x_min + width / 2;
+            landmark.X /= height;
+            landmark.Y -= y_min + height / 2;
+            landmark.Y /= height;
         }
     }
 }
